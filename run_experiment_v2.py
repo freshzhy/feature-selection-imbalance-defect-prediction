@@ -1,11 +1,11 @@
 """
-软件缺陷预测实验脚本 v2
-特征选择 × 类别不平衡处理 × 分类器 全组合对比实验
+Software defect prediction experiment script v2
+Full-factorial comparison: Feature Selection x Class Imbalance Handling x Classifier
 
-v2 变更:
-- 新增第四种不平衡处理: class_weight (代价敏感学习)
-- 新增 MCC 和 AUC-PR 指标
-- 实验从 36 条管道扩展为 48 条 (3 FS × 4 imbalance × 4 classifier)
+v2 changes:
+- Added 4th imbalance handling method: class_weight (cost-sensitive learning)
+- Added MCC and AUC-PR metrics
+- Expanded from 36 to 48 pipelines (3 FS x 4 imbalance x 4 classifier)
 """
 
 import sys
@@ -188,16 +188,16 @@ def main():
         ds_name = os.path.splitext(fname)[0]
         path = os.path.join(DATA_DIR, fname)
         print(f"\n{'='*55}")
-        print(f"数据集: {ds_name}")
+        print(f"Dataset: {ds_name}")
 
         try:
             X, y = load_arff(path)
         except Exception as e:
-            print(f"  加载失败: {e}")
+            print(f"  Load failed: {e}")
             continue
 
         defect_rate = y.mean() * 100
-        print(f"样本: {len(y)}  特征: {X.shape[1]}  缺陷率: {defect_rate:.1f}%")
+        print(f"Samples: {len(y)}  Features: {X.shape[1]}  Defect rate: {defect_rate:.1f}%")
 
         min_class = y.value_counts().min()
 
@@ -256,10 +256,10 @@ def main():
         best.to_excel(writer, sheet_name="BestPerDataset", index=False)
 
     print(f"\n{'='*55}")
-    print(f"实验完成！结果已保存：")
-    print(f"  CSV  → {csv_path}")
-    print(f"  Excel→ {xlsx_path}")
-    print(f"总记录数：{len(df_all)}")
+    print(f"Experiment complete! Results saved:")
+    print(f"  CSV   -> {csv_path}")
+    print(f"  Excel -> {xlsx_path}")
+    print(f"Total records: {len(df_all)}")
 
 
 if __name__ == "__main__":

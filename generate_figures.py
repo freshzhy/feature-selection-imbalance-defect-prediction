@@ -1,6 +1,6 @@
 """
-论文图表生成脚本
-生成7张出版级图表，保存至 figures/ 目录
+Figure generation script
+Generates 7 publication-quality figures, saved to figures/ directory
 """
 
 import subprocess, sys
@@ -20,7 +20,7 @@ import matplotlib.patches as mpatches
 import seaborn as sns
 from scipy import stats
 
-# ── 基础设置 ───────────────────────────────────────────
+# ── Basic settings ────────────────────────────────────
 FIG_DIR = os.path.join(os.path.dirname(__file__), "figures")
 os.makedirs(FIG_DIR, exist_ok=True)
 
@@ -46,7 +46,7 @@ CLF_ORDER  = ["LR", "SVM", "RF", "XGB"]
 FS_ORDER   = ["None", "IG", "CFS"]
 IMB_ORDER  = ["None", "SMOTE", "ADASYN"]
 
-# ── 加载数据 ───────────────────────────────────────────
+# ── Load data ─────────────────────────────────────────
 CSV = os.path.join(os.path.dirname(__file__), "results", "all_results.csv")
 df  = pd.read_csv(CSV)
 df["FS"]        = df["FS"].fillna("None")
@@ -58,10 +58,10 @@ def save(fig, name):
     path = os.path.join(FIG_DIR, name)
     fig.savefig(path)
     plt.close(fig)
-    print(f"  ✓ {name}")
+    print(f"  -> {name}")
 
 # ════════════════════════════════════════════════════════
-# Figure 2 — 各分类器 × 不平衡处理方法 平均F1（全数据集均值）
+# Figure 2 — Classifier x Imbalance Handling mean F1 (averaged across datasets)
 # ════════════════════════════════════════════════════════
 def fig2_clf_imb_f1():
     agg = df.groupby(["Classifier", "Imbalance"])["F1"].mean().reset_index()
@@ -92,7 +92,7 @@ def fig2_clf_imb_f1():
     return fig
 
 # ════════════════════════════════════════════════════════
-# Figure 1 — 各特征选择方法 平均F1对比
+# Figure 1 — Feature Selection method mean F1 comparison
 # ════════════════════════════════════════════════════════
 def fig1_fs_effect():
     agg = df.groupby(["FS", "Classifier"])["F1"].mean().reset_index()
@@ -123,7 +123,7 @@ def fig1_fs_effect():
     return fig
 
 # ════════════════════════════════════════════════════════
-# Figure 3 — 热力图：各数据集 最优F1（FS × Imbalance 均值，按分类器取最大）
+# Figure 3 — Heatmap: Dataset x Classifier (best F1)
 # ════════════════════════════════════════════════════════
 def fig3_heatmap_dataset_clf():
     pivot = df.groupby(["Dataset", "Classifier"])["F1"].max().reset_index()
@@ -140,7 +140,7 @@ def fig3_heatmap_dataset_clf():
     return fig
 
 # ════════════════════════════════════════════════════════
-# Figure 4 — 热力图：不平衡处理 × 特征选择 平均F1（全数据集）
+# Figure 4 — Heatmap: FS x Imbalance mean F1 (all datasets)
 # ════════════════════════════════════════════════════════
 def fig4_heatmap_fs_imb():
     pivot = df.groupby(["FS", "Imbalance"])["F1"].mean().reset_index()
@@ -158,7 +158,7 @@ def fig4_heatmap_fs_imb():
     return fig
 
 # ════════════════════════════════════════════════════════
-# Figure 5 — 各数据集上 SMOTE/ADASYN vs 无处理 F1 提升对比
+# Figure 5 — Per-dataset F1: SMOTE/ADASYN vs No Handling
 # ════════════════════════════════════════════════════════
 def fig5_improvement():
     base = df[df.Imbalance == "None"].groupby("Dataset")["F1"].mean()
@@ -187,7 +187,7 @@ def fig5_improvement():
     return fig
 
 # ════════════════════════════════════════════════════════
-# Figure 6 — AUC 热力图：数据集 × 分类器（最大AUC）
+# Figure 6 — AUC heatmap: Dataset x Classifier (best AUC)
 # ════════════════════════════════════════════════════════
 def fig6_auc_heatmap():
     pivot = df.groupby(["Dataset", "Classifier"])["AUC"].max().reset_index()
@@ -204,7 +204,7 @@ def fig6_auc_heatmap():
     return fig
 
 # ════════════════════════════════════════════════════════
-# Figure 7 — 雷达图：各方法在五个维度的综合表现
+# Figure 7 — Radar: strategy comparison across metrics
 # ════════════════════════════════════════════════════════
 def fig7_radar():
     metrics = ["F1", "AUC", "Precision", "Recall"]
@@ -238,10 +238,10 @@ def fig7_radar():
     return fig
 
 # ════════════════════════════════════════════════════════
-# 主流程
+# Main
 # ════════════════════════════════════════════════════════
 if __name__ == "__main__":
-    print("生成论文图表...")
+    print("Generating figures...")
     save(fig2_clf_imb_f1(),    "fig2_classifier_imbalance_f1.png")
     save(fig1_fs_effect(),     "fig1_feature_selection_effect.png")
     save(fig5_heatmap_dataset_clf(), "fig5_heatmap_dataset_classifier_f1.png")
@@ -250,10 +250,10 @@ if __name__ == "__main__":
     save(fig6_auc_heatmap(),   "fig6_heatmap_auc.png")
     save(fig7_radar(),         "fig7_radar_strategy_comparison.png")
 
-    print(f"\n全部图表已保存至: figures/")
-    print("共7张，建议用于论文的图如下：")
-    print("  Fig1 → Results 4.2节 (分类器对比)")
-    print("  Fig3 → Results 4.1节 (热力图主图)")
-    print("  Fig4 → Results 4.3节 (特征选择×不平衡处理)")
-    print("  Fig5 → Results 4.2节 (不平衡处理跨数据集对比)")
-    print("  Fig7 → Discussion (雷达图综合对比)")
+    print(f"\nAll figures saved to: figures/")
+    print("7 figures generated. Suggested usage:")
+    print("  Fig1 -> Results 4.2 (classifier comparison)")
+    print("  Fig3 -> Results 4.1 (heatmap, main figure)")
+    print("  Fig4 -> Results 4.3 (FS x imbalance)")
+    print("  Fig5 -> Results 4.2 (imbalance handling across datasets)")
+    print("  Fig7 -> Discussion (radar strategy comparison)")

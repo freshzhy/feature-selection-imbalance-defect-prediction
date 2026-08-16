@@ -1,8 +1,8 @@
 """
-论文图表生成脚本 v2
-- 使用 v2 实验结果（含 CostSensitive + MCC + AUC-PR）
-- Figure 1/2 改为箱线图+散点（PeerJ 推荐）
-- 统一输出为 fig1.png–fig7.png
+Figure generation script v2
+- Uses v2 experiment results (with CostSensitive + MCC + AUC-PR)
+- Figure 1/2 use boxplot + stripplot (recommended by PeerJ)
+- Outputs unified as fig1.png-fig7.png
 """
 import os
 import numpy as np
@@ -233,7 +233,7 @@ def fig7():
 
 
 if __name__ == "__main__":
-    print("生成 v2 论文图表...")
+    print("Generating v2 figures...")
     save(fig1(), "fig1.png")
     save(fig2(), "fig2.png")
     save(fig3(), "fig3.png")
@@ -241,7 +241,7 @@ if __name__ == "__main__":
     save(fig5(), "fig5.png")
     save(fig6(), "fig6.png")
     save(fig7(), "fig7.png")
-    print(f"\n全部图表已保存至: {FIG_DIR}/")
+    print(f"\nAll figures saved to: {FIG_DIR}/")
     print("  fig1 — Feature Selection effect (boxplot)")
     print("  fig2 — Imbalance Handling effect (boxplot)")
     print("  fig3 — Heatmap: Dataset × Classifier (F1)")

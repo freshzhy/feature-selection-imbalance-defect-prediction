@@ -1,6 +1,6 @@
 """
-软件缺陷预测实验脚本
-特征选择 × 类别不平衡处理 × 分类器 全组合对比实验
+Software defect prediction experiment script
+Full-factorial comparison: Feature Selection x Class Imbalance Handling x Classifier
 """
 
 import subprocess, sys
@@ -10,7 +10,7 @@ for pkg in REQUIRED:
     try:
         __import__(pkg.replace("-", "_").split("==")[0])
     except ImportError:
-        print(f"安装 {pkg}...")
+        print(f"Installing {pkg}...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", pkg, "-q"])
 
 import os, warnings
@@ -32,15 +32,15 @@ from xgboost import XGBClassifier
 
 warnings.filterwarnings("ignore")
 
-# ── 配置 ──────────────────────────────────────────────
+# ── Config ────────────────────────────────────────────
 DATA_DIR  = os.path.join(os.path.dirname(__file__), "data")
 OUT_DIR   = os.path.join(os.path.dirname(__file__), "results")
 os.makedirs(OUT_DIR, exist_ok=True)
 
-# 跳过空文件
+# Skip empty files
 SKIP = {"KC4"}
 
-# ── 分类器 ────────────────────────────────────────────
+# ── Classifiers ───────────────────────────────────────
 CLASSIFIERS = {
     "LR":  LogisticRegression(max_iter=1000, random_state=42),
     "SVM": SVC(kernel="rbf", probability=True, random_state=42),
@@ -49,7 +49,7 @@ CLASSIFIERS = {
                          eval_metric="logloss", random_state=42, verbosity=0),
 }
 
-# ── 特征选择 (选择前 50% 特征) ────────────────────────
+# ── Feature Selection (top 50% features) ─────────────
 def make_fs(name, k):
     if name == "None":
         return None
@@ -60,14 +60,14 @@ def make_fs(name, k):
 
 FS_METHODS = ["None", "IG", "CFS"]
 
-# ── 不平衡处理 ────────────────────────────────────────
+# ── Imbalance Handling ────────────────────────────────
 IMBALANCE = {
     "None":  None,
     "SMOTE": SMOTE(random_state=42, k_neighbors=3),
     "ADASYN": ADASYN(random_state=42, n_neighbors=3),
 }
 
-# ── 评估指标 ──────────────────────────────────────────
+# ── Evaluation Metrics ────────────────────────────────
 SCORING = {
     "precision": make_scorer(precision_score, zero_division=0),
     "recall":    make_scorer(recall_score,    zero_division=0),
@@ -81,10 +81,10 @@ CV = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
 def load_arff(path):
     data, meta = arff.loadarff(path)
     df = pd.DataFrame(data)
-    # 解码字节列
+    # Decode byte columns
     for col in df.select_dtypes([object]):
         df[col] = df[col].str.decode("utf-8")
-    # 目标列（最后一列，通常是 Defective）
+    # Target column (last column, typically Defective)
     target_col = df.columns[-1]
     df[target_col] = (df[target_col].str.upper() == "Y").astype(int)
     df = df.dropna()
@@ -129,23 +129,23 @@ def main():
         ds_name = os.path.splitext(fname)[0]
         path = os.path.join(DATA_DIR, fname)
         print(f"\n{'='*55}")
-        print(f"数据集: {ds_name}")
+        print(f"Dataset: {ds_name}")
 
         try:
             X, y = load_arff(path)
         except Exception as e:
-            print(f"  加载失败: {e}")
+            print(f"  Load failed: {e}")
             continue
 
         defect_rate = y.mean() * 100
-        print(f"样本: {len(y)}  特征: {X.shape[1]}  缺陷率: {defect_rate:.1f}%")
+        print(f"Samples: {len(y)}  Features: {X.shape[1]}  Defect rate: {defect_rate:.1f}%")
 
-        # 如果正样本太少 ADASYN 可能失败，设保护
+        # Guard against ADASYN failure when minority class is too small
         min_class = y.value_counts().min()
 
         for fs_name in FS_METHODS:
             for imb_name in list(IMBALANCE.keys()):
-                # 正样本极少时跳过 ADASYN
+                # Skip ADASYN when minority class is too small
                 if imb_name == "ADASYN" and min_class < 10:
                     done += len(CLASSIFIERS)
                     continue
@@ -171,7 +171,7 @@ def main():
                         done += 1
                         print(f"{tag}  SKIP ({e})")
 
-    # ── 保存结果 ──────────────────────────────────────
+    # ── Save results ─────────────────────────────────
     df_all = pd.DataFrame(records)
     csv_path  = os.path.join(OUT_DIR, "all_results.csv")
     xlsx_path = os.path.join(OUT_DIR, "all_results.xlsx")
@@ -180,21 +180,21 @@ def main():
     with pd.ExcelWriter(xlsx_path, engine="openpyxl") as writer:
         df_all.to_excel(writer, sheet_name="All", index=False)
 
-        # 每个数据集一个 sheet
+        # One sheet per dataset
         for ds in df_all["Dataset"].unique():
             df_all[df_all["Dataset"] == ds].to_excel(
                 writer, sheet_name=ds[:31], index=False)
 
-        # 最优组合摘要
+        # Best configuration summary
         best = (df_all.sort_values("F1", ascending=False)
                       .groupby("Dataset").first().reset_index())
         best.to_excel(writer, sheet_name="BestPerDataset", index=False)
 
     print(f"\n{'='*55}")
-    print(f"实验完成！结果已保存：")
-    print(f"  CSV  → {csv_path}")
-    print(f"  Excel→ {xlsx_path}")
-    print(f"总记录数：{len(df_all)}")
+    print(f"Experiment complete! Results saved:")
+    print(f"  CSV   -> {csv_path}")
+    print(f"  Excel -> {xlsx_path}")
+    print(f"Total records: {len(df_all)}")
 
 
 if __name__ == "__main__":
